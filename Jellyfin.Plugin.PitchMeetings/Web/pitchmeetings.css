@@ -1,0 +1,17 @@
+/* Pitch Meetings – the section uses jellyfin-web's own row and card classes; only sizing is set here. */
+.pm-section .overflowBackdropCard.pm-card {
+  width: 23.1vw;
+  max-width: 340px;
+  min-width: 220px;
+}
+
+.pm-section .overflowPortraitCard.pm-card {
+  width: 13vw;
+  max-width: 200px;
+  min-width: 130px;
+}
+
+@media (max-width: 800px) {
+  .pm-section .overflowBackdropCard.pm-card { width: 72vw; }
+  .pm-section .overflowPortraitCard.pm-card { width: 40vw; }
+}

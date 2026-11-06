@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Pitch Meetings</title>
+</head>
+<body>
+<div id="PitchMeetingsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+    <style>
+        #PitchMeetingsConfigPage .pm-summary { margin: .5em 0 1em; }
+        #PitchMeetingsConfigPage .pm-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 1em; margin-bottom: 1em; }
+        #PitchMeetingsConfigPage .pm-tools .emby-button { margin: 0; }
+        #PitchMeetingsConfigPage table { width: 100%; border-collapse: collapse; }
+        #PitchMeetingsConfigPage th, #PitchMeetingsConfigPage td { text-align: left; padding: .45em .6em; vertical-align: middle; border-bottom: 1px solid rgba(128, 128, 128, .25); }
+        #PitchMeetingsConfigPage th { font-weight: 600; opacity: .8; }
+        #PitchMeetingsConfigPage td.pm-ep { width: 38%; }
+        #PitchMeetingsConfigPage .pm-date { opacity: .65; font-size: .85em; }
+        #PitchMeetingsConfigPage .pm-none { opacity: .55; }
+        #PitchMeetingsConfigPage .pm-badge { display: inline-block; font-size: .75em; padding: 0 .45em; margin-left: .5em; border-radius: 3px; background: rgba(0, 164, 220, .25); }
+        #PitchMeetingsConfigPage .pm-row-input { width: 100%; box-sizing: border-box; padding: .4em .5em; font: inherit; color: inherit; background: rgba(128, 128, 128, .15); border: 1px solid rgba(128, 128, 128, .35); border-radius: 4px; }
+        #PitchMeetingsConfigPage .pm-row-input.pm-changed { border-color: #00a4dc; }
+        #PitchMeetingsConfigPage .pm-row-input.pm-invalid { border-color: #c33; }
+        #PitchMeetingsConfigPage a.pm-link { color: inherit; }
+        #PitchMeetingsConfigPage .pm-reset { margin-left: .4em; cursor: pointer; opacity: .7; background: none; border: 0; color: inherit; font: inherit; text-decoration: underline; }
+    </style>
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="PitchMeetingsConfigForm">
+                <div class="verticalSection">
+                    <h2 class="sectionTitle">Pitch Meetings</h2>
+                    <p class="fieldDescription">Links the Pitch Meeting videos to the movies and shows they are about, in both directions. The links are found automatically from the video titles and are updated after every library scan.</p>
+                </div>
+
+                <div class="checkboxContainer">
+                    <label class="emby-checkbox-label">
+                        <input id="Enabled" type="checkbox" is="emby-checkbox" />
+                        <span>Show the links in the web client</span>
+                    </label>
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="SourceSeriesNames">Series with the Pitch Meeting videos</label>
+                    <input id="SourceSeriesNames" type="text" is="emby-input" />
+                    <div class="fieldDescription">Name of the series in your YouTube library. Several names separated by commas.</div>
+                </div>
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="MatchSeries" type="checkbox" is="emby-checkbox" />
+                        <span>Link Pitch Meetings about TV shows</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">E.g. "Stranger Things Season 5" is linked to that season of the show.</div>
+                </div>
+                <div class="checkboxContainer">
+                    <label class="emby-checkbox-label">
+                        <input id="ShowOnTargetPage" type="checkbox" is="emby-checkbox" />
+                        <span>Movie and show pages: show the Pitch Meeting</span>
+                    </label>
+                </div>
+                <div class="checkboxContainer">
+                    <label class="emby-checkbox-label">
+                        <input id="ShowOnEpisodePage" type="checkbox" is="emby-checkbox" />
+                        <span>Pitch Meeting pages: show the movie or show</span>
+                    </label>
+                </div>
+
+                <h3 class="sectionTitle">Links</h3>
+                <div class="pm-summary fieldDescription" id="pmSummary">Loading…</div>
+                <div class="pm-tools">
+                    <label class="emby-checkbox-label">
+                        <input id="pmOnlyUnlinked" type="checkbox" is="emby-checkbox" checked />
+                        <span>Only videos without a link</span>
+                    </label>
+                    <button is="emby-button" type="button" id="pmRebuild" class="raised emby-button"><span>Match again now</span></button>
+                </div>
+                <p class="fieldDescription">To correct a link, type the movie or show into the field and pick it from the list. Choose "— no link —" for videos that belong to nothing; empty the field to go back to the automatic link. Corrections are kept when you click Save.</p>
+                <datalist id="pmCandidates"></datalist>
+                <table>
+                    <thead><tr><th>Pitch Meeting</th><th>Linked to</th><th>Correction</th></tr></thead>
+                    <tbody id="pmRows"></tbody>
+                </table>
+
+                <div style="margin-top: 2em;">
+                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                        <span>Save</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            var pluginId = '263fd402-979d-4384-8f9c-889c416552bf';
+            var NO_LINK = '— no link —';
+            var EMPTY = '00000000-0000-0000-0000-000000000000';
+            var page = document.querySelector('#PitchMeetingsConfigPage');
+            var bools = ['Enabled', 'MatchSeries', 'ShowOnTargetPage', 'ShowOnEpisodePage'];
+            var overrides = {};      // episodeId -> targetId (EMPTY = no link)
+            var labelToId = {};
+            var idToLabel = {};
+            var status = null;
+
+            function norm(id) { return String(id || '').replace(/-/g, '').toLowerCase(); }
+            function dashed(id) {
+                var n = norm(id);
+                return n.length === 32 ? n.slice(0, 8) + '-' + n.slice(8, 12) + '-' + n.slice(12, 16) + '-' + n.slice(16, 20) + '-' + n.slice(20) : id;
+            }
+            function esc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
+            }
+            function getJson(path) { return ApiClient.getJSON(ApiClient.getUrl(path)); }
+
+            function loadCandidates() {
+                return getJson('PitchMeetings/Candidates').then(function (list) {
+                    var seen = {};
+                    list.forEach(function (c) { seen[c.label] = (seen[c.label] || 0) + 1; });
+                    labelToId = {}; idToLabel = {};
+                    var html = '<option value="' + NO_LINK + '"></option>';
+                    list.forEach(function (c) {
+                        var label = seen[c.label] > 1 ? c.label + ' [' + norm(c.id).slice(0, 6) + ']' : c.label;
+                        labelToId[label] = c.id;
+                        idToLabel[norm(c.id)] = label;
+                        html += '<option value="' + esc(label) + '"></option>';
+                    });
+                    page.querySelector('#pmCandidates').innerHTML = html;
+                });
+            }
+
+            function loadStatus() {
+                return getJson('PitchMeetings/Status').then(function (s) {
+                    status = s;
+                    renderRows();
+                });
+            }
+
+            function renderRows() {
+                if (!status) return;
+                var summary = page.querySelector('#pmSummary');
+                if (!status.sourceSeriesFound) {
+                    summary.textContent = 'No series with this name was found in the library.';
+                } else {
+                    summary.textContent = status.linked + ' of ' + status.total + ' videos are linked.';
+                }
+                var onlyUnlinked = page.querySelector('#pmOnlyUnlinked').checked;
+                var html = '';
+                status.rows.forEach(function (r) {
+                    var key = norm(r.id);
+                    var hasOverride = Object.prototype.hasOwnProperty.call(overrides, key);
+                    if (onlyUnlinked && r.targets.length && !hasOverride) return;
+                    var linked = r.targets.length
+                        ? r.targets.map(function (t) {
+                            return '<a class="pm-link" href="#/details?id=' + esc(norm(t.id)) + '" target="_blank">' + esc(t.label) + '</a>';
+                        }).join('<br>') + (r.manual ? '<span class="pm-badge">manual</span>' : '')
+                        : '<span class="pm-none">—</span>';
+                    var value = '';
+                    if (hasOverride) value = overrides[key] === EMPTY ? NO_LINK : (idToLabel[norm(overrides[key])] || '');
+                    var se = (r.season != null ? 'S' + r.season : '') + (r.episode != null ? 'E' + r.episode : '');
+                    var date = r.date ? new Date(r.date).toLocaleDateString() : '';
+                    html += '<tr data-id="' + esc(key) + '">'
+                        + '<td class="pm-ep">' + esc(r.name) + '<br><span class="pm-date">' + esc(se) + (se && date ? ' · ' : '') + esc(date) + '</span></td>'
+                        + '<td>' + linked + '</td>'
+                        + '<td><input class="pm-row-input" list="pmCandidates" value="' + esc(value) + '" placeholder="automatic" />'
+                        + '</td></tr>';
+                });
+                page.querySelector('#pmRows').innerHTML = html
+                    || '<tr><td colspan="3" class="pm-none">' + (onlyUnlinked ? 'All videos are linked.' : 'No videos found.') + '</td></tr>';
+            }
+
+            page.querySelector('#pmRows').addEventListener('change', function (e) {
+                var input = e.target.closest('.pm-row-input');
+                if (!input) return;
+                var key = input.closest('tr').getAttribute('data-id');
+                var v = input.value.trim();
+                input.classList.remove('pm-invalid');
+                if (!v) {
+                    delete overrides[key];
+                } else if (v === NO_LINK) {
+                    overrides[key] = EMPTY;
+                } else if (labelToId[v]) {
+                    overrides[key] = labelToId[v];
+                } else {
+                    input.classList.add('pm-invalid');
+                    return;
+                }
+                input.classList.add('pm-changed');
+            });
+
+            page.querySelector('#pmOnlyUnlinked').addEventListener('change', renderRows);
+
+            page.querySelector('#pmRebuild').addEventListener('click', function () {
+                Dashboard.showLoadingMsg();
+                ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('PitchMeetings/Rebuild') })
+                    .then(loadStatus)
+                    .finally(function () { Dashboard.hideLoadingMsg(); });
+            });
+
+            page.addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    bools.forEach(function (k) { page.querySelector('#' + k).checked = !!config[k]; });
+                    page.querySelector('#SourceSeriesNames').value = config.SourceSeriesNames || '';
+                    overrides = {};
+                    (config.Overrides || []).forEach(function (o) { overrides[norm(o.EpisodeId)] = o.TargetId; });
+                    return loadCandidates().then(loadStatus);
+                }).finally(function () { Dashboard.hideLoadingMsg(); });
+            });
+
+            page.querySelector('#PitchMeetingsConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    bools.forEach(function (k) { config[k] = page.querySelector('#' + k).checked; });
+                    config.SourceSeriesNames = page.querySelector('#SourceSeriesNames').value;
+                    config.Overrides = Object.keys(overrides).map(function (k) {
+                        return { EpisodeId: dashed(k), TargetId: dashed(overrides[k]) };
+                    });
+                    return ApiClient.updatePluginConfiguration(pluginId, config);
+                }).then(function (result) {
+                    Dashboard.processPluginConfigurationUpdateResult(result);
+                    return loadStatus();
+                }).finally(function () { Dashboard.hideLoadingMsg(); });
+                return false;
+            });
+        })();
+    </script>
+</div>
+</body>
+</html>
