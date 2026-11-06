@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15100c"/>
+      <stop offset="1" stop-color="#2b1c10"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffc857"/>
+      <stop offset="1" stop-color="#f29e1f"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+
+  <!-- left bubble: the pitch -->
+  <g filter="url(#shadow)">
+    <path d="M300 110 h300 a34 34 0 0 1 34 34 v150 a34 34 0 0 1 -34 34 h-190 l-62 56 l10 -56 h-58 a34 34 0 0 1 -34 -34 v-150 a34 34 0 0 1 34 -34 z" fill="#f4efe8"/>
+  </g>
+  <!-- film frame inside the left bubble -->
+  <rect x="352" y="160" width="230" height="118" rx="10" fill="#2b1c10"/>
+  <g fill="#f4efe8">
+    <rect x="364" y="170" width="16" height="12" rx="2"/><rect x="364" y="196" width="16" height="12" rx="2"/><rect x="364" y="222" width="16" height="12" rx="2"/><rect x="364" y="248" width="16" height="12" rx="2"/>
+    <rect x="554" y="170" width="16" height="12" rx="2"/><rect x="554" y="196" width="16" height="12" rx="2"/><rect x="554" y="222" width="16" height="12" rx="2"/><rect x="554" y="248" width="16" height="12" rx="2"/>
+  </g>
+  <path d="M452 190 L500 219 L452 248 Z" fill="url(#amber)"/>
+
+  <!-- right bubble: the reaction -->
+  <g filter="url(#shadow)">
+    <path d="M700 170 h260 a34 34 0 0 1 34 34 v130 a34 34 0 0 1 -34 34 h-48 l10 52 l-60 -52 h-162 a34 34 0 0 1 -34 -34 v-130 a34 34 0 0 1 34 -34 z" fill="url(#amber)"/>
+  </g>
+  <text x="830" y="318" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-weight="800" font-size="120" fill="#2b1c10">?!</text>
+
+  <!-- link between the two -->
+  <g fill="none" stroke="#f4efe8" stroke-width="12" stroke-linecap="round">
+    <path d="M606 398 h-26 a26 26 0 0 1 0 -52 h26" transform="translate(0,22)"/>
+    <path d="M652 368 h26 a26 26 0 0 1 0 52 h-26"/>
+    <path d="M598 394 h62"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="640" y="590" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-weight="700" font-size="104" fill="#f4efe8" letter-spacing="1">Pitch <tspan fill="#ffb938">Meetings</tspan></text>
+</svg>

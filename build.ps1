@@ -1,6 +1,6 @@
 # Builds the plugin and packs a ready-to-install folder + zip into .\dist
 param(
-    [string]$Version = "1.0.0.0"
+    [string]$Version = "1.0.0.1"
 )
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
@@ -20,9 +20,11 @@ New-Item -ItemType Directory -Force $folder | Out-Null
 
 Copy-Item (Join-Path $root "Jellyfin.Plugin.PitchMeetings\bin\Release\net10.0\Jellyfin.Plugin.PitchMeetings.dll") $folder
 
+Copy-Item (Join-Path $root "images\logo.png") $folder
+
 $meta = [ordered]@{
     category    = "General"
-    changelog   = "First release: automatic links between Pitch Meetings and movies/series"
+    changelog   = "Plugin image for the dashboard and the plugin catalog"
     description = "Shows the matching Pitch Meeting video on movie and series pages, and links each Pitch Meeting back to its movie."
     guid        = "263fd402-979d-4384-8f9c-889c416552bf"
     name        = "Pitch Meetings"
@@ -33,6 +35,7 @@ $meta = [ordered]@{
     version     = $Version
     status      = "Active"
     autoUpdate  = $false
+    imagePath   = "logo.png"
     assemblies  = @("Jellyfin.Plugin.PitchMeetings.dll")
 }
 [IO.File]::WriteAllText((Join-Path $folder "meta.json"), ($meta | ConvertTo-Json), (New-Object Text.UTF8Encoding($false)))

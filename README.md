@@ -1,5 +1,7 @@
 # Pitch Meetings – Jellyfin-Plugin
 
+![PitchMeetings](images/logo.png)
+
 Verknüpft die Pitch-Meeting-Videos aus der lokalen YouTube-Bibliothek automatisch mit den Filmen und Serien, um die es geht, und zwar in beide Richtungen:
 
 - **Filmseite / Serienseite / Staffelseite:** Abschnitt „Pitch Meeting“ mit Vorschaubild. Klick öffnet das Video, der Play-Button spielt es direkt ab.
@@ -46,7 +48,7 @@ Voraussetzung: Das GitHub-Repo ist öffentlich, sonst kann Jellyfin Manifest und
 
 ### Manuell
 
-1. Ordner `dist\PitchMeetings_1.0.0.0` in das Plugin-Verzeichnis von Jellyfin kopieren.
+1. Ordner `dist\PitchMeetings_1.0.0.1` in das Plugin-Verzeichnis von Jellyfin kopieren.
 2. Jellyfin neu starten.
 3. Im Browser Strg+F5. In der Konsole liefert `PitchMeetings.version` die geladene Version.
 
