@@ -27,7 +27,7 @@ $meta = [ordered]@{
     guid        = "263fd402-979d-4384-8f9c-889c416552bf"
     name        = "Pitch Meetings"
     overview    = "Links Pitch Meeting videos to their movies and shows"
-    owner       = "local"
+    owner       = "skriewel"
     targetAbi   = "12.0.0.0"
     timestamp   = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     version     = $Version
@@ -42,3 +42,5 @@ if (Test-Path $zip) { Remove-Item $zip -Force -Confirm:$false }
 Compress-Archive -Path (Join-Path $folder "*") -DestinationPath $zip
 $md5 = (Get-FileHash $zip -Algorithm MD5).Hash
 Write-Host "Done: $zip (MD5 $md5)"
+
+& (Join-Path $root "update-manifest.ps1") -Version $Version
